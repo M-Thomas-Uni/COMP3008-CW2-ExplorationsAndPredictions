@@ -1,11 +1,19 @@
-
 library(tidyverse)
 library(dplyr)
+library(lubridate)
 
 data_19to21 <- read.csv("./data/AnnualPopulationSurvey_Jan2019_Dec2021.csv")
 
-reduced_data <- data_19to21 %>% select(AAGE, CIGEVER)
+reduced_data <- data_19to21 %>% select(AAGE, CIGEVER, REFDTE)
 
+reduced_data <- reduced_data %>% mutate(ACT_DTE = parse_date_time(REFDTE, orders=c("Ymd","dmy","mdy","Y-m-d","d/m/Y")))
+summary(reduced_data$ACT_DTE)
+n_distinct(is.na(reduced_data$ACT_DTE))
+
+daily <- reduced_data %>%
+  count(ACT_DTE)
+ggplot(daily, aes(ACT_DTE, n)) + geom_line() + labs(title="Responses per day")
+                                        
 reduced_as_table <- table(reduced_data$AAGE, reduced_data$CIGEVER)
 
 reduced_as_table <- reduced_as_table[-(1:2),]
@@ -33,3 +41,4 @@ data_age_as_factor <- data_19to21 %>% mutate(AAGE = as.character(AAGE)) %>% muta
 
 table(data_age_as_factor$AAGE)
 plot(table(data_age_as_factor$AAGE))
+
