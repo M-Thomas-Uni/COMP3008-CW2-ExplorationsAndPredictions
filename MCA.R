@@ -27,19 +27,23 @@ quant_idx_B <- match(quant_vars, names(data_22to24))
 to_be_factors_idx_A <- setdiff(seq_along(data_19to21), quant_idx_A)
 to_be_factors_idx_B <- setdiff(seq_along(data_22to24), quant_idx_B)
 
-data_19to21[to_be_factors_idx_A] <- lapply(data_19to21[to_be_factors_idx_A], factor)
-data_22to24[to_be_factors_idx_B] <- lapply(data_22to24[to_be_factors_idx_B], factor)
+data_19to21[to_be_factors_idx_A] <- lapply(data_19to21[to_be_factors_idx_A], as.factor)
+data_22to24[to_be_factors_idx_B] <- lapply(data_22to24[to_be_factors_idx_B], as.factor)
+
+data_19to21[to_be_factors_idx_A] <- lapply(data_19to21[quant_idx_A], as.numeric)
+data_22to24[to_be_factors_idx_B] <- lapply(data_22to24[quant_idx_B], as.numeric)
 
 library(Factoshiny)
 res <- Factoshiny(data_19to21)
 
 set.seed(42)
-sample_size = 25000
+sample_size = 30000
 
 sub_19to21 <- data_19to21[sample(nrow(data_19to21), sample_size), ]
 sub_22to24 <- data_22to24[sample(nrow(data_22to24), sample_size), ]
 
-
+sub_19to24.shiny <- Factoshiny(sub_19to21)
+sub_22to24.shiny <- Factoshiny(sub_22to24)
 
 
 sub_22to24.mca_result <- MCA(sub_19to21)
