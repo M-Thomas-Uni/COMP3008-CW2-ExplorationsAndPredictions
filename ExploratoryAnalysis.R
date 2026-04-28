@@ -2,6 +2,7 @@ library(tidyverse)
 library(dplyr)
 library(lubridate)
 
+
 data_19to21 <- read.csv("./data/AnnualPopulationSurvey_Jan2019_Dec2021.csv")
 
 reduced_data <- data_19to21 %>% select(AAGE, CIGEVER, REFDTE)

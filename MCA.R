@@ -28,8 +28,7 @@ to_be_factors_idx_B <- setdiff(seq_along(data_22to24), quant_idx_B)
 data_19to21[to_be_factors_idx_A] <- lapply(data_19to21[to_be_factors_idx_A], factor)
 data_22to24[to_be_factors_idx_B] <- lapply(data_22to24[to_be_factors_idx_B], factor)
 
-data_19to21 <- data_19to21[, to_be_factors_idx_A]
-data_22to24 <- data_22to24[, to_be_factors_idx_A]
+data_19
 
 set.seed(42)
 sample_size = 30000
