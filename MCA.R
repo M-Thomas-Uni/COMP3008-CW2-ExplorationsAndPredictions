@@ -1,6 +1,8 @@
 
 library(FactoMineR)
 library(factoextra)
+library(tidyverse)
+library(dplyr)
 
 data_19to21 <- read.csv("data/AnnualPopulationSurvey_Jan2019_Dec2021.csv")
 data_22to24 <- read.csv("data/AnnualPopulationSurvey_Jan2022_Dec2024.csv")
@@ -12,7 +14,7 @@ supp_vars <- c("REFDTE", "REFWKD", "REFWKM", "REFWKY",
                "ETHCBS", "ETHEWEUL", "ETHGBEUL", "ETHMX11", "ETHUKEUL", "ETHWHE",
                "ETHWHW", "ETHWSC")
 
-
+which(data_19to21)
 
 supp_idx_A <- match(supp_vars, names(data_19to21))
 
@@ -28,14 +30,36 @@ to_be_factors_idx_B <- setdiff(seq_along(data_22to24), quant_idx_B)
 data_19to21[to_be_factors_idx_A] <- lapply(data_19to21[to_be_factors_idx_A], factor)
 data_22to24[to_be_factors_idx_B] <- lapply(data_22to24[to_be_factors_idx_B], factor)
 
-data_19
+library(Factoshiny)
+res <- Factoshiny(data_19to21)
 
 set.seed(42)
-sample_size = 30000
+sample_size = 25000
 
 sub_19to21 <- data_19to21[sample(nrow(data_19to21), sample_size), ]
 sub_22to24 <- data_22to24[sample(nrow(data_22to24), sample_size), ]
 
+
+
+
+sub_22to24.mca_result <- MCA(sub_19to21)
+
+fviz_eig(sub_22to24.mca_result, addlabels=TRUE)
+
+fviz_mca_ind(sub_22to24.mca_result,
+             col.ind = "cos2",
+             axes= c(1, 2),
+             repel = TRUE)
+
+fviz_contrib(sub_22to24.mca_result,
+             choice = "var",
+             axes = 1,
+             top = 10)
+
+fviz_mca_var(sub_22to24.mca_result,
+             col.var = "contrib",
+             axes = c(1, 2),
+             repel = TRUE)
 
 
 
