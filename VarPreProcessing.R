@@ -38,10 +38,15 @@ diagnostics$marker <- with(diagnostics, ifelse(
   ifelse(level_count > 50, "review", "ok"))
 ))
 
-
+##Top 30 (all the Excludes)
 head(diagnostics[order(-diagnostics$level_count),], 30)
-
 head(diagnostics[order(-diagnostics$ratio), ], 30)
+
+##Marked for Review only
+rev_diagnostics <- subset(diagnostics, marker=="review")
+
+head(rev_diagnostics[order(-rev_diagnostics$level_count),], 30)
+head(rev_diagnostics[order(-rev_diagnostics$ratio), ], 30)
 
 ggplot(diagnostics, aes(x=marker)) + geom_bar(fill="steelblue") + 
   geom_text(
@@ -64,6 +69,11 @@ to_keep <- c("GROSS99", "HOURPAY", "HRRATE", "NET99", "USNETPAY", "USUGPAY", "GR
 excludes <- setdiff(excludes, to_keep)
 
 review <- diagnostics$var_name[diagnostics$marker=="review"]
-review_okayed <- c("")
+review_okayed <- c("AGE", "SC20SMN", "BANDG", "BANDN", "CAMEYR", "SC10LMN", "SC10MMN", "SC20R", "SC10SMN", "LEFTYR", "HIQUAL15", "BACTHR", "BUSHR", "PAIDHRA", "PAIDHRU", "TOTHRS", "TTACHR", "TTUSHR", "CAMEYR2", "HITQUA15", "OVHRS", "BANDN2")
 
 excludes <- c(excludes, setdiff(review, review_okayed))
+
+names_19 <- names(data_19to21)
+names_22 <- names(data_22to24)
+
+setdiff(names_22, names_19)
