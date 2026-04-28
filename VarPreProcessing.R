@@ -1,5 +1,6 @@
 
 library(dplyr)
+library(ggplot2)
 
 data_19to21 <- read.csv("data/AnnualPopulationSurvey_Jan2019_Dec2021.csv")
 
@@ -38,8 +39,31 @@ diagnostics$marker <- with(diagnostics, ifelse(
 ))
 
 
-head(diagnostics[order(-diagnostics$level_count),], 20)
+head(diagnostics[order(-diagnostics$level_count),], 30)
 
-head(diagnostics[order(-diagnostics$ratio), ], 20)
+head(diagnostics[order(-diagnostics$ratio), ], 30)
+
+ggplot(diagnostics, aes(x=marker)) + geom_bar(fill="steelblue") + 
+  geom_text(
+    stat = "count",
+    aes(label=..count..),
+    vjust = -0.5,
+    size=4
+  ) +
+  labs(
+  title="Frequency of Uniqueness Suggestions",
+  x="Marker",
+  y="Count"
+) + theme_minimal(base_size=14)
 
 hist(diagnostics$level_count, breaks=50, main="Dist of Variable Uniqueness", xlab="Number of Categories")
+
+excludes <- diagnostics$var_name[diagnostics$marker=="exclude"]
+to_keep <- c("GROSS99", "HOURPAY", "HRRATE", "NET99", "USNETPAY", "USUGPAY", "GRSSWK", "NETWK", "SECNET", "SECGRO", "TOTAC2", "TOTUS2", "TOTAC1", "GRSSWK2", "ACTHR", "USUHR", "NETWK2", "soc20S", "HRRATE2")
+
+excludes <- setdiff(excludes, to_keep)
+
+review <- diagnostics$var_name[diagnostics$marker=="review"]
+review_okayed <- c("")
+
+excludes <- c(excludes, setdiff(review, review_okayed))
