@@ -330,42 +330,4 @@ res.mca.2224 <- MCA(
   graph = FALSE
 )
 
-fviz_mca_biplot(res.mca.1921)
-fviz_mca_biplot(res.mca.2224)
-
-fviz_mca_var(res.mca.1921, repel = TRUE)
-fviz_mca_var(res.mca.1921, choice = "quanti.sup", repel = TRUE)
-
-fviz_contrib(res.mca.1921, choice = "var", axes = 1)
-fviz_contrib(res.mca.1921, choice = "var", axes = 2)
-
-fviz_mca_var(res.mca.1921, col.var = "cos2",
-             gradient.cols = c("grey80", "blue"))
-
-
-fviz_mca_ind(res.mca.1921,
-             habillage = "GOVTOF",
-             addEllipses = TRUE,
-             alpha.ind = 0.1)
-
-fviz_mca_biplot(res.mca.1921,
-                repel = TRUE,
-                geom = c("point", "text"),
-                habillage = "GOVTOF",
-                alpha.ind = 0.05,
-                col.ind = "grey70",
-                col.var = "black")
-
-region_coords <- aggregate(
-  res.mca.1921$ind$coord[,1:2],
-  by = list(cleaned.1921.mca$GOVTOF),
-  FUN = mean
-)
-
-colnames(region_coords) <- c("Region", "Dim1", "Dim2")
-
-ggplot(region_coords, aes(Dim1, Dim2, label = Region)) +
-  geom_point(size = 4) +
-  geom_text(vjust = -0.5) +
-  theme_minimal()
 
