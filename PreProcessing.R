@@ -1,18 +1,18 @@
 
-library(janitor)
 library(dplyr)
+library(tidyverse)
 
 data_19to21 <- read.csv("data/AnnualPopulationSurvey_Jan2019_Dec2021.csv")
 data_22to24 <- read.csv("data/AnnualPopulationSurvey_Jan2022_Dec2024.csv")
 
 ###clean names (janitor)
-pre_clean.1921 <- clean_names(data_19to21)%>% rename(
+pre_clean.1921 <- rename(
   
-) %>% select(-discurr13, -starts_with("healpb"), -starts_with("qual_"), -starts_with("sc2010"))
+) %>% select(-discurr13, -starts_with("HEALPB"), -starts_with("QUAL_"), -starts_with("SC2010"))
 
 pre_clean.2224 <- clean_names(data_22to24) %>% rename(
-  gor9d = gor9dcensus2021,
-  combined_authorities = combined_authoritiescensus2021
+  gGOR9d = GOR9DCENSUS2021,
+  CombinedAuthorities = CombinedAuthoritiescensus2021
 ) %>% select( -starts_with("flex"), -fled22)
 
 ##get uniques to 1921 // 2224, then common (interesect, setdiffs)
@@ -142,10 +142,55 @@ only_1921
 only_2224
 common
 
-## scaffold:
-  # handle codes (almost all -> na)
-  # factor conversion (-8/-9 -> na)
-  # numeric conversion (99995~ -> na)
+
+
+clean_missing <- function(x, varname) {
+  if (is.factor(x)) x <- as.character(x)
+  
+  x <- trimws(x)
+  
+  x[x %in% c("", "-8", "-9", "na", "NA", "null", "NULL", "99995", "99996", "99997", "99998", "99999", "41000")] <- NA
+  
+  if (varname %in% c("LNGLST", "APPRCURR", "ERNFILT", "HEALYL")) {
+    x[x %in% c("3", "4")] <- NA
+  }
+  
+  if (varname == "HIQUAL15") {
+    x[x %in% c("85")] <- NA
+  }
+  if (varname %in% c("HIQUAL22", "HITQUA15")) {
+    x[x %in% c("74")] <- NA
+  }
+  if (varname %in% c("HIQUL15D", "HIQUL22D", "ILLDAYS1", "ILLDAYS2", "ILLDAYS2", "ILLDAYS3", "ILLDAYS4","ILLDAYS5","ILLDAYS6","ILLDAYS7",)) {
+    x[x %in% c("7")] <- NA
+  }
+  if (varname %in% c("JSATYP")) {
+    x[x %in% c("4")] <- NA
+  }
+  if (varname %in% c("LEVQUL22")) {
+    x[x %in% c("12")] <- NA
+  }
+  
+  
+  
+  
+  
+  num_na <- sum(!is.na(x))
+  suppressWarnings(xn <- as.numeric(x))
+  if (sum(!is.na(xn)) > num_na) {
+    return(x)
+  } else {
+    return(xn)
+  }
+  
+}
+
+pre_clean.1921 <- as.data.frame(
+  mapply(clean_missing, pre_clean.1921, names(pre_clean.1921), SIMPLIFY = FALSE)
+)
+pre_clean.2224 <- as.data.frame(
+  mapply(clean_missing, pre_clean.2224, names(pre_clean.2224), SIMPLIFY = FALSE)
+)
 
 # basic demographics
 # geography (region/county + lad?)
