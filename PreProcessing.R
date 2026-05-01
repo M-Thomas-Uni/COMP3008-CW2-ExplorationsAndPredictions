@@ -179,7 +179,7 @@ variables.categorical <- c(
   "ETHUKEUL", # Ethnicity 9 cat, UK Level
   "MARSTA", # Marital Status
   "NATOX7_EUL_Main", # Nationality
-  "GOR9d", # Regions
+#  "GOR9d", # Regions
   "GOVTOF", # Regions #2,
   
   "INECAC05", # Economic activity ILO
@@ -241,7 +241,7 @@ add_refmonth <- function(df) {
 }
 
 stratified_sampling <- function(df, sample_frac, keep_vars) {
-  df %>% group_by(REFMONTH) %>%
+  df %>% group_by(REFMONTH, GOVTOF) %>%
     sample_frac(sample_frac) %>%
     ungroup() %>%
     select(all_of(keep_vars))
@@ -255,7 +255,7 @@ prep_clean <- function(df, sample_frac, var.cat, var.con, weight.cat, weight.con
   return(df_sub)
 }
 
-sample_frac <- 0.15
+sample_frac <- 0.35
 
 cleaned.1921 <- prep_clean(pre_clean.1921, sample_frac, variables.categorical, variables.continuous, weights.categorical, weights.continuous)
 cleaned.2224 <- prep_clean(pre_clean.2224, sample_frac, variables.categorical, variables.continuous, weights.categorical, weights.continuous)
@@ -269,5 +269,103 @@ sapply(cleaned.2224[weights.categorical], class)
 sapply(cleaned.1921[weights.continuous], class)
 sapply(cleaned.2224[weights.continuous], class)
 
+active_vars <- c(
+  "SEX","AAGE","ETHUKEUL","MARSTA","NATOX7_EUL_Main",
+  "INECAC05","FTPTW","FTPTWK","JOBTYP",
+  "SC20MMJ","PUBLICR","HIQUL_D","LIMACT","LNGLST"
+)
 
-# then redraft rpt struct
+supp_quali <- c("GOVTOF","REFMONTH","SC20MMN","INDE07M","ENROLL","STUCUR")
+supp_quanti <- c("TTACHR","TTUSHR","GRSSWK","HOURPAY")
+
+
+### Run MCA
+cleaned.1921.mca <- cleaned.1921
+cleaned.2224.mca <- cleaned.2224
+
+
+cleaned.1921.mca[variables.categorical] <- lapply(
+  cleaned.1921.mca[variables.categorical],
+  function(x) {
+    x <- as.character(x)
+    x[is.na(x)] <- "-7"
+    factor(x)
+  }
+)
+
+cleaned.2224.mca[variables.categorical] <- lapply(
+  cleaned.2224.mca[variables.categorical],
+  function(x) {
+    x <- as.character(x)
+    x[is.na(x)] <- "-7"
+    factor(x)
+  }
+)
+
+
+cleaned.1921.mca[variables.categorical] <- lapply(cleaned.1921.mca[variables.categorical], droplevels)
+cleaned.1921.mca$REFMONTH <- factor(cleaned.1921.mca$REFMONTH)
+    
+cleaned.2224.mca[variables.categorical] <- lapply(cleaned.2224.mca[variables.categorical], droplevels)
+cleaned.2224.mca$REFMONTH <- factor(cleaned.2224.mca$REFMONTH)
+
+
+vars_for_mca <- c(active_vars, supp_quali, supp_quanti)
+
+df_mca.1921 <- cleaned.1921.mca[, vars_for_mca]
+df_mca.2224 <- cleaned.2224.mca[, vars_for_mca]
+
+
+res.mca.1921 <- MCA(
+  df_mca.1921,
+  quali.sup  = which(names(df_mca.1921) %in% supp_quali),
+  quanti.sup = which(names(df_mca.1921) %in% supp_quanti),
+  graph = FALSE
+)
+
+res.mca.2224 <- MCA(
+  df_mca.2224,
+  quali.sup  = which(names(df_mca.2224) %in% supp_quali),
+  quanti.sup = which(names(df_mca.2224) %in% supp_quanti),
+  graph = FALSE
+)
+
+fviz_mca_biplot(res.mca.1921)
+fviz_mca_biplot(res.mca.2224)
+
+fviz_mca_var(res.mca.1921, repel = TRUE)
+fviz_mca_var(res.mca.1921, choice = "quanti.sup", repel = TRUE)
+
+fviz_contrib(res.mca.1921, choice = "var", axes = 1)
+fviz_contrib(res.mca.1921, choice = "var", axes = 2)
+
+fviz_mca_var(res.mca.1921, col.var = "cos2",
+             gradient.cols = c("grey80", "blue"))
+
+
+fviz_mca_ind(res.mca.1921,
+             habillage = "GOVTOF",
+             addEllipses = TRUE,
+             alpha.ind = 0.1)
+
+fviz_mca_biplot(res.mca.1921,
+                repel = TRUE,
+                geom = c("point", "text"),
+                habillage = "GOVTOF",
+                alpha.ind = 0.05,
+                col.ind = "grey70",
+                col.var = "black")
+
+region_coords <- aggregate(
+  res.mca.1921$ind$coord[,1:2],
+  by = list(cleaned.1921.mca$GOVTOF),
+  FUN = mean
+)
+
+colnames(region_coords) <- c("Region", "Dim1", "Dim2")
+
+ggplot(region_coords, aes(Dim1, Dim2, label = Region)) +
+  geom_point(size = 4) +
+  geom_text(vjust = -0.5) +
+  theme_minimal()
+
