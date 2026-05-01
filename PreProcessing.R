@@ -5,30 +5,13 @@ library(tidyverse)
 data_19to21 <- read.csv("data/AnnualPopulationSurvey_Jan2019_Dec2021.csv")
 data_22to24 <- read.csv("data/AnnualPopulationSurvey_Jan2022_Dec2024.csv")
 
-###clean names (janitor)
-pre_clean.1921 <- rename(
-  
-) %>% select(-discurr13, -starts_with("HEALPB"), -starts_with("QUAL_"), -starts_with("SC2010"))
+###clean name
+pre_clean.1921 <- data_19to21 %>% select(-DISCURR13, -starts_with("HEALPB"), -starts_with("QUAL_"), -starts_with("SC2010"))
 
-pre_clean.2224 <- clean_names(data_22to24) %>% rename(
-  gGOR9d = GOR9DCENSUS2021,
+pre_clean.2224 <- data_22to24 %>% rename(
+  GOR9d = GOR9dcensus2021,
   CombinedAuthorities = CombinedAuthoritiescensus2021
-) %>% select( -starts_with("flex"), -fled22)
-
-##get uniques to 1921 // 2224, then common (interesect, setdiffs)
-vnames.1921 <- names(pre_clean.1921) 
-vnames.2224 <- names(pre_clean.2224) 
-
-common <- intersect(vnames.1921, vnames.2224)
-only_1921 <- setdiff(vnames.1921, vnames.2224)
-only_2224 <- setdiff(vnames.2224, vnames.1921)
-
-length(common)
-length(only_1921)
-length(only_2224)
-
-only_1921
-only_2224
+) %>% select( -starts_with("FLEX"), -FLED22)
 
 
 ## Lining up encodings of SOC 2010->SOC 2020
@@ -69,22 +52,23 @@ harmonise_soc_var <- function(df, soc_var, sex_var, map) {
     select(soc2020) %>%
     pull()
 }
+
 harmonise_soc_vector <- function(soc2010_vec, sex_vec, soc_map_list) {
   
   out <- character(length(soc2010_vec))
   
   for (i in seq_along(soc2010_vec)) {
-    soc10 <- soc2010_vec[i]
-    sex   <- sex_vec[i]
+    SOC10 <- soc2010_vec[i]
+    SEX   <- sex_vec[i]
     
     # If SOC2010 code missing, return NA
-    if (is.na(soc10) || soc10 == "") {
+    if (is.na(SOC10) || SOC10 == "") {
       out[i] <- NA
       next
     }
     
     # Retrieve all possible mappings
-    rows <- soc_map_list[[as.character(soc10)]]
+    rows <- soc_map_list[[as.character(SOC10)]]
     
     if (is.null(rows)) {
       out[i] <- NA
@@ -92,9 +76,9 @@ harmonise_soc_vector <- function(soc2010_vec, sex_vec, soc_map_list) {
     }
     
     # Choose correct weight column
-    if (sex == 1) {
+    if (SEX == 1) {
       w <- rows$men_avg
-    } else if (sex == 2) {
+    } else if (SEX == 2) {
       w <- rows$women_avg
     } else {
       w <- rows$avg_avg
@@ -111,14 +95,15 @@ harmonise_soc_vector <- function(soc2010_vec, sex_vec, soc_map_list) {
   return(out)
 }
 
-soc_vars <- c("sc10lmn", "sc10lmn", "sc10lmn")
+
+soc_vars <- c("SC10LMN", "SC10MMN", "SC10SMN")
 
 run_harmonise <- function (df, occ_vars) {
   for (v in occ_vars) {
-    new_v <- sub("sc10", "sc20", v)
+    new_v <- sub("SC10", "SC20", v)
     df[[new_v]] <- harmonise_soc_vector(
       soc2010_vec = df[[v]],
-      sex_vec = df$sex,
+      sex_vec = df$SEX,
       soc_map_list = soc_list
     )
   }
@@ -126,22 +111,6 @@ run_harmonise <- function (df, occ_vars) {
 }
 
 pre_clean.1921 <- run_harmonise(pre_clean.1921, soc_vars)
-
-vnames.1921 <- names(pre_clean.1921) 
-vnames.2224 <- names(pre_clean.2224) 
-
-common <- intersect(vnames.1921, vnames.2224)
-only_1921 <- setdiff(vnames.1921, vnames.2224)
-only_2224 <- setdiff(vnames.2224, vnames.1921)
-
-length(common)
-length(only_1921)
-length(only_2224)
-
-only_1921
-only_2224
-common
-
 
 
 clean_missing <- function(x, varname) {
@@ -161,7 +130,7 @@ clean_missing <- function(x, varname) {
   if (varname %in% c("HIQUAL22", "HITQUA15")) {
     x[x %in% c("74")] <- NA
   }
-  if (varname %in% c("HIQUL15D", "HIQUL22D", "ILLDAYS1", "ILLDAYS2", "ILLDAYS2", "ILLDAYS3", "ILLDAYS4","ILLDAYS5","ILLDAYS6","ILLDAYS7",)) {
+  if (varname %in% c("HIQUL15D", "HIQUL22D", "ILLDAYS1", "ILLDAYS2", "ILLDAYS2", "ILLDAYS3", "ILLDAYS4","ILLDAYS5","ILLDAYS6","ILLDAYS7")) {
     x[x %in% c("7")] <- NA
   }
   if (varname %in% c("JSATYP")) {
@@ -170,9 +139,6 @@ clean_missing <- function(x, varname) {
   if (varname %in% c("LEVQUL22")) {
     x[x %in% c("12")] <- NA
   }
-  
-  
-  
   
   
   num_na <- sum(!is.na(x))
@@ -192,20 +158,69 @@ pre_clean.2224 <- as.data.frame(
   mapply(clean_missing, pre_clean.2224, names(pre_clean.2224), SIMPLIFY = FALSE)
 )
 
-# basic demographics
-# geography (region/county + lad?)
+# Handle HIQUL
+pre_clean.1921$HIQUL_D <- pre_clean.1921$HIQUL15D
+pre_clean.2224$HIQUL_D <- coalesce(pre_clean.2224$HIQUL22D, pre_clean.2224$HIQUL15D)
 
-# ILO emp status
-# full vs part
-# perm vs temp
-# usual weekly hrs
-# industry sector (SIC)
-# occupation (SOC) 
+weights.categorical <- c("PRXREL", "IOUTCOME")
+weights.continuous <- c("PWTA22C", "NPWT22C")
 
-# education (highest qual, whether in education, apprenticeship, training)
-# health + disabilities
-# household (income, own/rent, earners, children)
-# weightings
+variables.categorical <- c(
+  #DEMOGRAPHICS
+  "SEX", # Sex
+  "AAGE", # Age bands
+  "ETHUKEUL", # Ethnicity 9 cat, UK Level
+  "MARSTA", # Marital Status
+  "NATOX7_EUL_Main", # Nationality
+  "GOR9d", # Regions
+  "GOVTOF", # Regions #2,
+  
+  "INECAC05", # Economic activity ILO
+  "FTPTW", # Full time or Part time work
+  "FTPTWK", # Full time or part time in main job
+  "JOBTYP", # Permanency of job
+
+  "SC20MMJ", # SOC2020 major codes, main job 
+  "SC20MMN", # SOC2020 minor codes, main job
+  
+  "INDE07M", # Industry sector in main job
+  "PUBLICR", # Public vs Private sector
+  
+  "HIQUL_D", # Highest Education
+  "ENROLL", # Enrolled in education?
+  "STUCUR", # YesNo -Full time student?
+  
+  "LIMACT", # Does health problem limit activity?
+  "LNGLST" # Lasted or expect to last 1yr+?
+)
+variables.continuous <- c(
+  "TTACHR", # Total actual hours
+  "TTUSHR", # Total usual hours
+  
+  "GRSSWK", # Gross weekly pay in main job
+  "HOURPAY" # Gross hourly pay
+)
+
+apply_typing <- function(df, var.cat, var.con, weight.cat, weight.con) {
+  df[var.cat] <- lapply(
+    df[var.cat], function(x) factor(x)
+    )
+  df[var.con] <- lapply(
+    df[var.con], function(x) as.numeric(x)
+  )
+  df[weight.cat] <- lapply(
+    df[weight.cat], function(x) factor(x)
+  )
+  df[weight.cat] <- lapply(
+    df[weight.cat], function(x) as.numeric(x)
+  )
+  
+  return(df)
+}
+
+pre_clean.1921 <- apply_typing(pre_clean.1921, variables.categorical, variables.continuous, weights.categorical, weights.continuous)
+pre_clean.2224 <- apply_typing(pre_clean.2224, variables.categorical, variables.continuous, weights.categorical, weights.continuous)
+
 
 
 # then redraft rpt struct
