@@ -1,12 +1,19 @@
 
 library(dplyr)
 library(tidyverse)
+library(lubridate)
+library(FactoMineR)
+library(Factoshiny)
+library(factoextra)
+
 
 data_19to21 <- read.csv("data/AnnualPopulationSurvey_Jan2019_Dec2021.csv")
 data_22to24 <- read.csv("data/AnnualPopulationSurvey_Jan2022_Dec2024.csv")
 
 ###clean name
-pre_clean.1921 <- data_19to21 %>% select(-DISCURR13, -starts_with("HEALPB"), -starts_with("QUAL_"), -starts_with("SC2010"))
+pre_clean.1921 <- data_19to21 %>% rename(
+  NPWT22C = npwt22c
+  ) %>% select(-DISCURR13, -starts_with("HEALPB"), -starts_with("QUAL_"), -starts_with("SC2010"))
 
 pre_clean.2224 <- data_22to24 %>% rename(
   GOR9d = GOR9dcensus2021,
@@ -221,6 +228,46 @@ apply_typing <- function(df, var.cat, var.con, weight.cat, weight.con) {
 pre_clean.1921 <- apply_typing(pre_clean.1921, variables.categorical, variables.continuous, weights.categorical, weights.continuous)
 pre_clean.2224 <- apply_typing(pre_clean.2224, variables.categorical, variables.continuous, weights.categorical, weights.continuous)
 
+
+### Final steps
+
+add_refmonth <- function(df) {
+  df %>% mutate(
+    REFWKY = as.numeric(REFWKY),
+    REFWKM = as.numeric(REFWKM),
+    REFMONTH = make_date(year=REFWKY, month=REFWKM, day=1)
+  )
+
+}
+
+stratified_sampling <- function(df, sample_frac, keep_vars) {
+  df %>% group_by(REFMONTH) %>%
+    sample_frac(sample_frac) %>%
+    ungroup() %>%
+    select(all_of(keep_vars))
+  }
+
+prep_clean <- function(df, sample_frac, var.cat, var.con, weight.cat, weight.con) {
+  df <- add_refmonth(df)
+  keep_vars <- c(var.cat, var.con, weight.cat, weight.con, "REFMONTH")
+  df_sub <- stratified_sampling(df, sample_frac, keep_vars)
+  
+  return(df_sub)
+}
+
+sample_frac <- 0.15
+
+cleaned.1921 <- prep_clean(pre_clean.1921, sample_frac, variables.categorical, variables.continuous, weights.categorical, weights.continuous)
+cleaned.2224 <- prep_clean(pre_clean.2224, sample_frac, variables.categorical, variables.continuous, weights.categorical, weights.continuous)
+
+sapply(cleaned.1921[variables.categorical], class)
+sapply(cleaned.2224[variables.categorical], class)
+sapply(cleaned.1921[variables.continuous], class)
+sapply(cleaned.2224[variables.continuous], class)
+sapply(cleaned.1921[weights.categorical], class)
+sapply(cleaned.2224[weights.categorical], class)
+sapply(cleaned.1921[weights.continuous], class)
+sapply(cleaned.2224[weights.continuous], class)
 
 
 # then redraft rpt struct
