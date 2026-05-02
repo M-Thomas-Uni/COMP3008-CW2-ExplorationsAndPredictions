@@ -255,7 +255,7 @@ prep_clean <- function(df, sample_frac, var.cat, var.con, weight.cat, weight.con
   return(df_sub)
 }
 
-sample_frac <- 0.35
+sample_frac <- 0.6
 
 cleaned.1921 <- prep_clean(pre_clean.1921, sample_frac, variables.categorical, variables.continuous, weights.categorical, weights.continuous)
 cleaned.2224 <- prep_clean(pre_clean.2224, sample_frac, variables.categorical, variables.continuous, weights.categorical, weights.continuous)
@@ -330,4 +330,38 @@ res.mca.2224 <- MCA(
   graph = FALSE
 )
 
+# Barplot of variable contributions to Dimension 1
+as.ggplot(fviz_contrib(res.mca.1921, choice = "var", axes = 1, top = 20)) + 
+
+# Barplot of variable contributions to Dimension 2
+as.ggplot(fviz_contrib(res.mca.1921, choice = "var", axes = 2, top = 20))
+
+as.ggplot(fviz_contrib(res.mca.1921, choice = "var", axes = 3, top = 20))
+
+cleaned.1921.for_reg <- cleaned.1921.mca %>%
+  mutate(
+    INECAC05_recode = case_when(
+      INECAC05 %in% 1:4  ~ "Employed",
+      INECAC05 == 5      ~ "Unemployed",
+      INECAC05 %in% 6:25 ~ "Inactive",
+      TRUE               ~ NA_character_
+    ),
+    INECAC05_recode = factor(
+      INECAC05_recode,
+      levels = c("Employed", "Unemployed", "Inactive")
+    )
+  )
+cleaned.2224.for_reg <- cleaned.2224.mca %>%
+  mutate(
+    INECAC05_recode = case_when(
+      INECAC05 %in% 1:4  ~ "Employed",
+      INECAC05 == 5      ~ "Unemployed",
+      INECAC05 %in% 6:25 ~ "Inactive",
+      TRUE               ~ NA_character_
+    ),
+    INECAC05_recode = factor(
+      INECAC05_recode,
+      levels = c("Employed", "Unemployed", "Inactive")
+    )
+  )
 
