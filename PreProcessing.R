@@ -272,10 +272,10 @@ sapply(cleaned.2224[weights.continuous], class)
 active_vars <- c(
   "SEX","AAGE","ETHUKEUL","MARSTA","NATOX7_EUL_Main",
   "INECAC05","FTPTW","FTPTWK","JOBTYP",
-  "SC20MMJ","PUBLICR","HIQUL_D","LIMACT","LNGLST"
+  "SC20MMJ","PUBLICR","HIQUL_D","LIMACT","LNGLST", "GOVTOF"
 )
 
-supp_quali <- c("GOVTOF","REFMONTH","SC20MMN","INDE07M","ENROLL","STUCUR")
+supp_quali <- c("REFMONTH","SC20MMN","INDE07M","ENROLL","STUCUR")
 supp_quanti <- c("TTACHR","TTUSHR","GRSSWK","HOURPAY")
 
 
@@ -331,10 +331,18 @@ res.mca.2224 <- MCA(
 )
 
 # Barplot of variable contributions to Dimension 1
-as.ggplot(fviz_contrib(res.mca.1921, choice = "var", axes = 1, top = 20)) + 
+as.ggplot(fviz_contrib(res.mca.1921, choice = "var", axes = 1, top = 20, title="Contribution of Variables to Dim-1 - 2019-2022")) +
 
 # Barplot of variable contributions to Dimension 2
-as.ggplot(fviz_contrib(res.mca.1921, choice = "var", axes = 2, top = 20))
+as.ggplot(fviz_contrib(res.mca.1921, choice = "var", axes = 2, top = 20, title="Contribution of Variables to Dim-2 - 2019-2022")) +
+
+# Barplot of variable contributions to Dimension 1
+as.ggplot(fviz_contrib(res.mca.2224, choice = "var", axes = 1, top = 20, title="Contribution of Variables to Dim-1 - 2022-2024")) +
+  
+  # Barplot of variable contributions to Dimension 2
+  as.ggplot(fviz_contrib(res.mca.2224, choice = "var", axes = 2, top = 20, title="Contribution of Variables to Dim-2 - 2022-2024"))
+
+
 
 as.ggplot(fviz_contrib(res.mca.1921, choice = "var", axes = 3, top = 20))
 
